@@ -20,7 +20,7 @@ RUN apt-get update && apt-get install -y \
 RUN git clone https://github.com/zhlynn/zsign.git /tmp/zsign \
     && cd /tmp/zsign/build/linux \
     && make \
-    && cp zsign /usr/local/bin/ \
+    && cp ../../bin/zsign /usr/local/bin/ \
     && rm -rf /tmp/zsign
 
 # A mi projektünk beállítása
