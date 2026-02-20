@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Saját Web Signer</title>
+    <style>
+        body { font-family: -apple-system, sans-serif; background: #000; color: #fff; padding: 20px; }
+        .container { max-width: 600px; margin: auto; background: #1c1c1e; padding: 20px; border-radius: 12px; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input[type="file"], input[type="text"], input[type="password"] { width: 100%; padding: 10px; border-radius: 6px; border: none; background: #2c2c2e; color: #fff; box-sizing: border-box; }
+        button { background: #0a84ff; color: white; border: none; padding: 15px; width: 100%; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; }
+        button:disabled { background: #555; }
+        #result { margin-top: 20px; text-align: center; display: none; }
+        .install-btn { background: #34c759; text-decoration: none; padding: 15px; display: block; border-radius: 8px; font-weight: bold; color: white; margin-bottom: 10px;}
+        #loader { display: none; margin-top: 15px; color: #0a84ff; text-align: center; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2 style="text-align: center;">IPA Web Signer</h2>
+    <form id="signForm">
+        <div class="form-group">
+            <label>1. IPA Fájl (.ipa)</label>
+            <input type="file" id="ipa" required accept=".ipa">
+        </div>
+        <div class="form-group">
+            <label>2. Tanúsítvány (.p12)</label>
+            <input type="file" id="p12" required accept=".p12">
+        </div>
+        <div class="form-group">
+            <label>3. MobileProvision</label>
+            <input type="file" id="prov" required accept=".mobileprovision">
+        </div>
+        <div class="form-group">
+            <label>4. P12 Jelszó</label>
+            <input type="password" id="password" required>
+        </div>
+        <div class="form-group">
+            <label>Alkalmazás Új Neve (Opcionális)</label>
+            <input type="text" id="app_name" value="Aláírt App">
+        </div>
+        <div class="form-group">
+            <label>Új Bundle ID (Opcionális)</label>
+            <input type="text" id="bundle_id" value="com.sajat.app">
+        </div>
+        <button type="submit" id="submitBtn">Aláírás és Telepítő Készítése</button>
+    </form>
+    
+    <div id="loader">Fájlok feltöltése és aláírás folyamatban. Kérlek várj...</div>
+
+    <div id="result">
+        <a id="installLink" href="#" class="install-btn">📲 Telepítés (OTA)</a>
+        <a id="downloadLink" href="#" style="color: #0a84ff;">Csak az .ipa fájl letöltése</a>
+    </div>
+</div>
+
+<script>
+document.getElementById('signForm').onsubmit = async (e) => {
+    e.preventDefault();
+    const btn = document.getElementById('submitBtn');
+    const loader = document.getElementById('loader');
+    const resultDiv = document.getElementById('result');
+    
+    btn.disabled = true;
+    loader.style.display = 'block';
+    resultDiv.style.display = 'none';
+
+    const formData = new FormData();
+    formData.append('ipa', document.getElementById('ipa').files[0]);
+    formData.append('p12', document.getElementById('p12').files[0]);
+    formData.append('prov', document.getElementById('prov').files[0]);
+    formData.append('password', document.getElementById('password').value);
+    formData.append('app_name', document.getElementById('app_name').value);
+    formData.append('bundle_id', document.getElementById('bundle_id').value);
+
+    try {
+        const response = await fetch('/sign', { method: 'POST', body: formData });
+        const data = await response.json();
+        
+        if (data.success) {
+            document.getElementById('installLink').href = data.install_url;
+            document.getElementById('downloadLink').href = data.ipa_url;
+            resultDiv.style.display = 'block';
+        } else {
+            alert('Hiba: ' + data.error);
+        }
+    } catch (err) {
+        alert('Hálózati hiba történt a feltöltés során.');
+    } finally {
+        btn.disabled = false;
+        loader.style.display = 'none';
+    }
+};
+</script>
+</body>
+</html>
