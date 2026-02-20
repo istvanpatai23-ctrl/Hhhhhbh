@@ -57,7 +57,7 @@ def sign_app():
     if not all([ipa, p12, prov]):
         return jsonify({"error": "Hiányzó fájlok!"}), 400
 
-    # Egyedi azonosító a munkamenethez (hogy ne akadjanak össze a fájlok)
+    # Egyedi azonosító a munkamenethez
     session_id = str(uuid.uuid4())[:8]
     
     ipa_path = os.path.join(UPLOAD_FOLDER, f"{session_id}_app.ipa")
@@ -79,8 +79,11 @@ def sign_app():
     try:
         subprocess.run(command, check=True, capture_output=True, text=True)
         
-        # Manifest generálása HTTPS alapcímmel
+        # --- JAVÍTÁS 1: HTTPS kikényszerítése ---
         base_url = request.host_url.rstrip('/')
+        if base_url.startswith("http://"):
+            base_url = base_url.replace("http://", "https://")
+        
         ipa_url = f"{base_url}/download/{session_id}_signed.ipa"
         
         plist_content = PLIST_TEMPLATE.format(
@@ -92,7 +95,6 @@ def sign_app():
         plist_url = f"{base_url}/download/{session_id}_manifest.plist"
         install_url = f"itms-services://?action=download-manifest&url={plist_url}"
 
-        # Sikeres válasz
         return jsonify({
             "success": True,
             "install_url": install_url,
@@ -106,10 +108,13 @@ def sign_app():
 def download(filename):
     file_path = os.path.join(UPLOAD_FOLDER, filename)
     if os.path.exists(file_path):
-        return send_file(file_path)
+        # --- JAVÍTÁS 2: Pontos fájltípusok (MIME types) megadása az iOS-nek ---
+        mimetype = 'application/octet-stream'
+        if filename.endswith('.plist'):
+            mimetype = 'text/xml'
+        return send_file(file_path, mimetype=mimetype)
     return "Fájl nem található", 404
 
 if __name__ == '__main__':
-    # A Render az 10000-es portot preferálja környezeti változóban
     port = int(os.environ.get("PORT", 10000))
     app.run(host='0.0.0.0', port=port)
