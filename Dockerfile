@@ -5,20 +5,20 @@ ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && apt-get install -y \
     build-essential \
     libssl-dev \
+    libminizip-dev \
+    pkg-config \
     uuid-dev \
     zip \
     unzip \
     curl \
     git \
-    cmake \
     python3 \
     python3-pip \
     && rm -rf /var/lib/apt/lists/*
 
-# Zsign letöltése és lefordítása CMake segítségével
+# Zsign letöltése és lefordítása a hivatalos linuxos mappából
 RUN git clone https://github.com/zhlynn/zsign.git /tmp/zsign \
-    && cd /tmp/zsign \
-    && cmake . \
+    && cd /tmp/zsign/build/linux \
     && make \
     && cp zsign /usr/local/bin/ \
     && rm -rf /tmp/zsign
