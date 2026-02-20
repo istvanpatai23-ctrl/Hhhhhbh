@@ -10,14 +10,17 @@ RUN apt-get update && apt-get install -y \
     unzip \
     curl \
     git \
+    cmake \
     python3 \
     python3-pip \
     && rm -rf /var/lib/apt/lists/*
 
-# Zsign letöltése és lefordítása C++ kódból
+# Zsign letöltése és lefordítása CMake segítségével
 RUN git clone https://github.com/zhlynn/zsign.git /tmp/zsign \
     && cd /tmp/zsign \
-    && g++ *.cpp common/*.cpp openssl/*.cpp -lcrypto -O3 -o /usr/local/bin/zsign \
+    && cmake . \
+    && make \
+    && cp zsign /usr/local/bin/ \
     && rm -rf /tmp/zsign
 
 # A mi projektünk beállítása
